@@ -57,8 +57,8 @@ class Config:
     
     # VM guest credentials (if needed for remote access)
     # Note: These should be set via environment variables in production
-    VM_USERNAME = "potato"  # Set via environment variable VM_USERNAME
-    VM_PASSWORD = "1234"  # Set via environment variable VM_PASSWORD
+    VM_USERNAME = "your-vmware-username"  # Set via environment variable VM_USERNAME
+    VM_PASSWORD = "your-vmware-password"  # Set via environment variable VM_PASSWORD
     
     # Advanced settings
     MAX_CONCURRENT_CHECKS = 5  # Maximum number of VMs to check simultaneously

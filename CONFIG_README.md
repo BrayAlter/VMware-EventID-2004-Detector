@@ -1,6 +1,63 @@
 # Configuration Options
 
-The VM monitoring system now supports configurable settings in `config.py`:
+The VM monitoring system supports multiple configuration methods:
+
+## Configuration Priority
+
+Settings are loaded in this order (highest priority first):
+1. **Environment Variables** (highest priority)
+2. **YAML Configuration** (`config.yaml`) 
+3. **Default Values** (in `config.py`)
+
+## YAML Configuration (Recommended)
+
+Create a `config.yaml` file in the same directory as `main.exe` (or the script directory) to configure the application:
+
+```yaml
+# VM Credentials
+vm_username: "your_vm_username"
+vm_password: "your_vm_password"
+
+# Timing Settings (in seconds)
+check_interval: 60          # How often to check VMs
+event_check_minutes: 1      # Check for events in the last N minutes
+restart_delay: 5            # Seconds to wait between stop and start
+vmrun_timeout: 30           # Timeout for vmrun commands
+
+# Restart Behavior
+restart_time_threshold_minutes: 2  # Only restart if event is within this many minutes
+restart_max_retries: 3             # Maximum retry attempts for restart operations
+restart_retry_delay: 10            # Seconds to wait between restart retries
+lock_file_cleanup_delay: 15        # Extra wait time for VMware lock files to clear
+
+# File Paths
+capture_folder: "capture"          # Folder for temporary event count files
+
+# Logging
+log_level: "INFO"           # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_file: "vmware_monitor.log"
+
+# Performance
+max_concurrent_checks: 5    # Maximum number of VMs to check simultaneously
+retry_attempts: 3           # Number of retry attempts for failed operations
+retry_delay: 10             # Seconds to wait between retry attempts
+
+# Debug Options
+debug_mode: false           # Enable debug logging and additional output
+dry_run: false              # If true, don't actually restart VMs (for testing)
+```
+
+### YAML Configuration Notes
+- File must be named exactly `config.yaml`
+- Place in the same directory as `main.exe` (for releases) or script directory (for development)
+- Keys are case-insensitive
+- Boolean values: `true`/`false` (lowercase)
+- String values should be quoted
+- Comments start with `#`
+
+## Legacy Configuration (config.py)
+
+Alternatively, you can modify settings directly in `config.py`:
 
 ## Key Configuration Parameters
 
@@ -36,20 +93,43 @@ The VM monitoring system now supports configurable settings in `config.py`:
 
 ## Environment Variable Override
 
-All settings can be overridden using environment variables:
-- `RESTART_TIME_THRESHOLD_MINUTES`
+All settings can be overridden using environment variables (highest priority):
+- `VM_USERNAME`
+- `VM_PASSWORD`
 - `CHECK_INTERVAL`
+- `RESTART_TIME_THRESHOLD_MINUTES`
 - `RESTART_MAX_RETRIES`
 - `RESTART_RETRY_DELAY`
 - `LOCK_FILE_CLEANUP_DELAY`
 - `CAPTURE_FOLDER`
+- `LOG_LEVEL`
+- `DEBUG_MODE`
+- `DRY_RUN`
 
 ## Example Usage
 
+### Using YAML Configuration
+```yaml
+# config.yaml
+check_interval: 30
+restart_time_threshold_minutes: 2
+log_level: "DEBUG"
+```
+
+### Using Environment Variables
 ```bash
-# Set restart threshold to 2 minutes and cycle interval to 30 seconds
+# Override YAML settings with environment variables
 set RESTART_TIME_THRESHOLD_MINUTES=2
 set CHECK_INTERVAL=30
+set LOG_LEVEL=DEBUG
+python main.py
+```
+
+### Mixed Configuration
+```bash
+# Use YAML for most settings, environment variables for sensitive data
+set VM_USERNAME=admin
+set VM_PASSWORD=secret123
 python main.py
 ```
 

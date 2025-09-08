@@ -26,20 +26,19 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
+        pip install -r requirements.txt
         
     - name: Build executable
       run: |
         pyinstaller --onefile --name main main.py
         
-    - name: Create sample config
+    - name: Verify config.yaml exists
       run: |
-        echo "# VMware Monitor Configuration" > config.yaml
-        echo "# Example: set CHECK_INTERVAL=120" >> config.yaml
-        echo "set CHECK_INTERVAL=60" >> config.yaml
-        echo "set EVENT_CHECK_MINUTES=1" >> config.yaml
-        echo "set VM_USERNAME=your_vm_username" >> config.yaml
-        echo "set VM_PASSWORD=your_vm_password" >> config.yaml
-        echo "set VM_DEBUG_MODE=false" >> config.yaml
+        if (!(Test-Path "config.yaml")) {
+          Write-Error "config.yaml not found in repository"
+          exit 1
+        }
+        Write-Host "config.yaml found and will be included in package"
         
     - name: Create zip package
       run: |

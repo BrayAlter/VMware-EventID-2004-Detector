@@ -15,7 +15,7 @@
 # pywin32>=227
 
 # For configuration file support (optional)
-# pyyaml>=6.0
+pyyaml>=6.0
 
 # For enhanced logging (optional)
 # colorlog>=6.7.0

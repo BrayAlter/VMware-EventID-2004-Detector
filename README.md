@@ -45,8 +45,41 @@ A Python-based monitoring system that automatically detects Windows Event ID 200
 
 ## Configuration
 
-### Basic Configuration
-Edit `config.py` to customize monitoring behavior:
+### YAML Configuration (Recommended)
+Edit `config.yaml` to customize monitoring behavior:
+
+```yaml
+# VM Credentials
+vm_username: "your_vm_username"
+vm_password: "your_vm_password"
+
+# Timing Settings (in seconds)
+check_interval: 60          # How often to check VMs
+event_check_minutes: 1      # Check for events in the last N minutes
+restart_delay: 5            # Seconds to wait between stop and start
+vmrun_timeout: 30           # Timeout for vmrun commands
+
+# Restart Behavior
+restart_time_threshold_minutes: 2  # Only restart if event is within this many minutes
+restart_max_retries: 3             # Maximum retry attempts for restart operations
+restart_retry_delay: 10            # Seconds to wait between restart retries
+
+# Logging
+log_level: "INFO"           # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_file: "vmware_monitor.log"
+
+# Performance
+max_concurrent_checks: 5    # Maximum number of VMs to check simultaneously
+retry_attempts: 3           # Number of retry attempts for failed operations
+retry_delay: 10             # Seconds to wait between retry attempts
+
+# Debug Options
+debug_mode: false           # Enable debug logging and additional output
+dry_run: false              # If true, don't actually restart VMs (for testing)
+```
+
+### Legacy Configuration
+Alternatively, edit `config.py` to customize monitoring behavior:
 
 ```python
 class Config:
@@ -58,6 +91,12 @@ class Config:
     LOCK_FILE_CLEANUP_DELAY = 5            # Wait time for lock file cleanup (seconds)
     VMRUN_TIMEOUT = 120                    # Timeout for vmrun commands
 ```
+
+### Configuration Priority
+The application loads configuration in this order (highest priority first):
+1. **Environment Variables** (highest priority)
+2. **YAML Configuration** (`config.yaml`)
+3. **Default Values** (in `config.py`)
 
 ### Environment Variables
 You can override settings using environment variables:
@@ -126,7 +165,8 @@ VMware-EventID-2004-Detector/
 ├── main.py              # Main execution script
 ├── vm_manager.py        # VM operations using vmrun
 ├── event_checker.py     # Windows Event Viewer monitoring
-├── config.py           # Configuration settings
+├── config.py           # Configuration settings (defaults)
+├── config.yaml         # YAML configuration file (recommended)
 ├── requirements.txt    # Python dependencies
 ├── CONFIG_README.md    # Detailed configuration documentation
 ├── README.md          # This file

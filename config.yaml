@@ -1,0 +1,30 @@
+# VMware VM Monitor Configuration
+# Edit these values to customize the application behavior
+
+# VM Credentials
+vm_username: "your-vmware-username"
+vm_password: "your-vmware-password"
+
+# Timing Settings (in seconds)
+check_interval: 60          # How often to check VMs
+event_check_minutes: 2      # Check for events in the last N minutes
+restart_delay: 5            # Seconds to wait between stop and start
+vmrun_timeout: 30           # Timeout for vmrun commands
+
+# Restart Behavior
+restart_time_threshold_minutes: 2  # Only restart if event is within this many minutes
+restart_max_retries: 3             # Maximum retry attempts for restart operations
+restart_retry_delay: 10            # Seconds to wait between restart retries
+
+# Logging
+log_level: "INFO"           # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_file: "vmware_monitor.log"
+
+# Performance
+max_concurrent_checks: 5    # Maximum number of VMs to check simultaneously
+retry_attempts: 3           # Number of retry attempts for failed operations
+retry_delay: 10             # Seconds to wait between retry attempts
+
+# Debug Options
+debug_mode: false           # Enable debug logging and additional output
+dry_run: false              # If true, don't actually restart VMs (for testing)
