@@ -135,7 +135,23 @@ class EventChecker:
             # Use configurable capture folder path
             import os
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            host_capture_path = os.path.join(script_dir, Config.CAPTURE_FOLDER, temp_filename)
+            capture_dir = os.path.join(script_dir, Config.CAPTURE_FOLDER)
+            
+            # Ensure capture directory exists and is writable
+            try:
+                os.makedirs(capture_dir, exist_ok=True)
+                # Test write permissions
+                test_file = os.path.join(capture_dir, "test_write.tmp")
+                with open(test_file, 'w') as f:
+                    f.write("test")
+                os.remove(test_file)
+            except (OSError, PermissionError) as e:
+                print(f"[CAPTURE ERROR] Cannot write to capture folder: {e}")
+                print(f"[CAPTURE ERROR] Using temp directory instead")
+                import tempfile
+                capture_dir = tempfile.gettempdir()
+            
+            host_capture_path = os.path.join(capture_dir, temp_filename)
             
             # Create PowerShell command that writes count and latest event time to file in C:\
             ps_command = f"""$events = Get-EventLog -LogName System -After '{start_str}' -Before '{end_str}' -ErrorAction SilentlyContinue | Where-Object {{$_.EventID -eq 2004}} | Sort-Object TimeGenerated -Descending; $count = ($events | Measure-Object).Count; $latestTime = if ($events) {{ $events[0].TimeGenerated.ToString('yyyy-MM-dd HH:mm:ss') }} else {{ 'None' }}; @{{count=$count; latest_time=$latestTime}} | ConvertTo-Json -Compress | Out-File -FilePath '{guest_temp_path}' -Encoding ASCII"""
