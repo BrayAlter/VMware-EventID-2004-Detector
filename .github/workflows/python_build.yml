@@ -26,7 +26,26 @@ jobs:
         
     - name: Build executable
       run: |
-        pyinstaller --onefile --name VMware-EventID-2004-Detector main.py
+        pyinstaller --onefile --name main main.py
+        
+    - name: Create sample config
+      run: |
+        echo "# VMware Monitor Configuration" > config.yaml
+        echo "# Example: set CHECK_INTERVAL=120" >> config.yaml
+        echo "set CHECK_INTERVAL=60" >> config.yaml
+        echo "set EVENT_CHECK_MINUTES=1" >> config.yaml
+        echo "set VM_USERNAME=your_vm_username" >> config.yaml
+        echo "set VM_PASSWORD=your_vm_password" >> config.yaml
+        echo "set VM_DEBUG_MODE=false" >> config.yaml
+        
+    - name: Create zip package
+      run: |
+        cd dist
+        copy ..\README.md .
+        copy ..\LICENSE .
+        copy ..\CONFIG_README.md .
+        copy config.yaml .
+        powershell Compress-Archive -Path main.exe,README.md,LICENSE,CONFIG_README.md,config.yaml -DestinationPath VMware-EventID-2004-Detector.zip
         
     - name: Create release
       if: startsWith(github.ref, 'refs/tags/')
@@ -44,4 +63,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: VMware-EventID-2004-Detector
-        path: dist/VMware-EventID-2004-Detector.exe
+        path: dist/VMware-EventID-2004-Detector.zip
