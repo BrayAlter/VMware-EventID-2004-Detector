@@ -131,7 +131,11 @@ class EventChecker:
             vm_name = self._get_vm_name_from_path(vm_path)
             temp_filename = f"event_count_{vm_name}.txt"
             guest_temp_path = f"C:\\{temp_filename}"
-            host_capture_path = f"C:\\Users\\brian\\Documents\\GitHub\\vmware-monitor\\capture\\{temp_filename}"
+            
+            # Use configurable capture folder path
+            import os
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            host_capture_path = os.path.join(script_dir, Config.CAPTURE_FOLDER, temp_filename)
             
             # Create PowerShell command that writes count and latest event time to file in C:\
             ps_command = f"""$events = Get-EventLog -LogName System -After '{start_str}' -Before '{end_str}' -ErrorAction SilentlyContinue | Where-Object {{$_.EventID -eq 2004}} | Sort-Object TimeGenerated -Descending; $count = ($events | Measure-Object).Count; $latestTime = if ($events) {{ $events[0].TimeGenerated.ToString('yyyy-MM-dd HH:mm:ss') }} else {{ 'None' }}; @{{count=$count; latest_time=$latestTime}} | ConvertTo-Json -Compress | Out-File -FilePath '{guest_temp_path}' -Encoding ASCII"""

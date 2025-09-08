@@ -29,6 +29,11 @@ The VM monitoring system now supports configurable settings in `config.py`:
 - **Purpose**: Extra wait time for VMware lock files to clear
 - **Example**: Total wait = RESTART_DELAY (5s) + LOCK_FILE_CLEANUP_DELAY (15s) = 20s
 
+### CAPTURE_FOLDER
+- **Default**: "capture"
+- **Purpose**: Folder name for temporary event count files (relative to project root)
+- **Example**: Files like "event_count_VM1.txt" are stored in this folder
+
 ## Environment Variable Override
 
 All settings can be overridden using environment variables:
@@ -37,6 +42,7 @@ All settings can be overridden using environment variables:
 - `RESTART_MAX_RETRIES`
 - `RESTART_RETRY_DELAY`
 - `LOCK_FILE_CLEANUP_DELAY`
+- `CAPTURE_FOLDER`
 
 ## Example Usage
 

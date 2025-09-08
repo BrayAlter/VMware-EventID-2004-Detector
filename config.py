@@ -48,6 +48,9 @@ class Config:
     # vmrun executable path (will be set dynamically)
     VMRUN_PATH = None
     
+    # Capture folder for temporary files
+    CAPTURE_FOLDER = "capture"  # Relative to project root
+    
     # PowerShell execution settings
     POWERSHELL_TIMEOUT = 30  # Timeout for PowerShell commands
     POWERSHELL_EXECUTION_POLICY = "Bypass"
@@ -86,6 +89,8 @@ class Config:
         
         cls.VM_USERNAME = os.getenv('VM_USERNAME', cls.VM_USERNAME)
         cls.VM_PASSWORD = os.getenv('VM_PASSWORD', cls.VM_PASSWORD)
+        
+        cls.CAPTURE_FOLDER = os.getenv('CAPTURE_FOLDER', cls.CAPTURE_FOLDER)
         
         cls.DEBUG_MODE = os.getenv('VM_DEBUG_MODE', 'false').lower() == 'true'
         cls.DRY_RUN = os.getenv('VM_DRY_RUN', 'false').lower() == 'true'
