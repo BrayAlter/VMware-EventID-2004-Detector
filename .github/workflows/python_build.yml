@@ -52,7 +52,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          dist/VMware-EventID-2004-Detector.exe
+          dist/VMware-EventID-2004-Detector.zip
         draft: false
         prerelease: false
         generate_release_notes: true
