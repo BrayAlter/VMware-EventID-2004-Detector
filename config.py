@@ -70,6 +70,44 @@ class Config:
     DRY_RUN = False  # If True, don't actually restart VMs (for testing)
     
     @classmethod
+    def load_from_yaml(cls, config_path="config.yaml"):
+        """Load configuration from YAML file"""
+        import os
+        import sys
+        
+        # Determine the config file path relative to executable/script
+        if getattr(sys, 'frozen', False):
+            # Running as PyInstaller executable
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            # Running as script
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        yaml_path = os.path.join(base_dir, config_path)
+        
+        if os.path.exists(yaml_path):
+            try:
+                import yaml
+                with open(yaml_path, 'r') as f:
+                    config_data = yaml.safe_load(f)
+                
+                if config_data:
+                    # Update class attributes from YAML
+                    for key, value in config_data.items():
+                        if hasattr(cls, key.upper()):
+                            setattr(cls, key.upper(), value)
+                        elif hasattr(cls, key):
+                            setattr(cls, key, value)
+                
+                print(f"Configuration loaded from: {yaml_path}")
+            except ImportError:
+                print("PyYAML not installed. Install with: pip install pyyaml")
+            except Exception as e:
+                print(f"Error loading config.yaml: {e}")
+        else:
+            print(f"Config file not found: {yaml_path}")
+    
+    @classmethod
     def load_from_env(cls):
         """Load configuration from environment variables"""
         import os
@@ -139,5 +177,6 @@ class Config:
         print(f"  Retry Attempts: {cls.RETRY_ATTEMPTS}")
         print(f"  Retry Delay: {cls.RETRY_DELAY} seconds")
 
-# Load configuration from environment variables on import
+# Load configuration on import - YAML first, then environment variables
+Config.load_from_yaml()
 Config.load_from_env()
