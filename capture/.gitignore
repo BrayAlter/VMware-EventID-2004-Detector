@@ -1,6 +1,0 @@
-# Ignore all event count files
-event_count_*.txt
-
-# Ignore any temporary files
-*.tmp
-*.log

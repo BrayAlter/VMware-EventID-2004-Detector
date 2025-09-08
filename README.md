@@ -1,4 +1,4 @@
-# VMware VM Monitor
+# VMware VM Monitor Event ID 2004
 
 A Python-based monitoring system that automatically detects Windows Event ID 2004 (Resource Exhaustion Detector) in VMware VMs and restarts affected VMs when the event occurs within the last minute.
 
@@ -7,7 +7,9 @@ A Python-based monitoring system that automatically detects Windows Event ID 200
 - **Automatic VM Detection**: Discovers all powered-on VMware VMs
 - **Event Monitoring**: Monitors Windows Event Viewer for Event ID 2004
 - **Smart Restart**: Automatically restarts VMs when resource exhaustion is detected
-- **Configurable**: Customizable monitoring intervals and settings
+- **Enhanced Restart Logic**: Retry mechanism with lock file handling to prevent VM restart errors
+- **Configurable**: Customizable monitoring intervals, thresholds, and retry settings
+- **Environment Variables**: Override all settings via environment variables
 - **Logging**: Comprehensive logging for monitoring and debugging
 - **Safe Operations**: Uses vmrun for reliable VM management
 
@@ -28,8 +30,8 @@ A Python-based monitoring system that automatically detects Windows Event ID 200
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/vmware-monitor.git
-   cd vmware-monitor
+   git clone https://github.com/BrayAlter/VMware-EventID-2004-Detector.git
+   cd VMware-EventID-2004-Detector
    ```
 
 2. **Install Python dependencies** (optional, uses mostly standard library):
@@ -48,29 +50,35 @@ Edit `config.py` to customize monitoring behavior:
 
 ```python
 class Config:
-    CHECK_INTERVAL = 60          # Check VMs every 60 seconds
-    EVENT_CHECK_MINUTES = 1      # Look for events in last 1 minute
-    RESTART_DELAY = 5           # Wait 5 seconds between stop/start
-    VMRUN_TIMEOUT = 120         # Timeout for vmrun commands
+    CHECK_INTERVAL = 60                    # Check VMs every 60 seconds
+    RESTART_TIME_THRESHOLD_MINUTES = 2     # Only restart if event is within last 2 minutes
+    RESTART_DELAY = 5                      # Wait 5 seconds between stop/start
+    RESTART_MAX_RETRIES = 3                # Maximum restart attempts
+    RESTART_RETRY_DELAY = 10               # Delay between restart retries (seconds)
+    LOCK_FILE_CLEANUP_DELAY = 5            # Wait time for lock file cleanup (seconds)
+    VMRUN_TIMEOUT = 120                    # Timeout for vmrun commands
 ```
 
 ### Environment Variables
 You can override settings using environment variables:
 
 ```bash
-set VM_CHECK_INTERVAL=30
-set VM_EVENT_CHECK_MINUTES=2
-set VM_LOG_LEVEL=DEBUG
-set VM_DRY_RUN=true
+set CHECK_INTERVAL=30
+set RESTART_TIME_THRESHOLD_MINUTES=2
+set LOG_LEVEL=DEBUG
+set DRY_RUN=true
 ```
 
 ### Available Environment Variables
-- `VM_CHECK_INTERVAL`: How often to check VMs (seconds)
-- `VM_EVENT_CHECK_MINUTES`: Event detection window (minutes)
-- `VM_RESTART_DELAY`: Delay between VM stop/start (seconds)
-- `VM_LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
-- `VM_DRY_RUN`: Test mode - don't actually restart VMs (true/false)
-- `VM_DEBUG_MODE`: Enable debug output (true/false)
+- `CHECK_INTERVAL`: How often to check VMs (seconds)
+- `RESTART_TIME_THRESHOLD_MINUTES`: Event detection window (minutes)
+- `RESTART_DELAY`: Delay between VM stop/start (seconds)
+- `RESTART_MAX_RETRIES`: Maximum restart attempts (default: 3)
+- `RESTART_RETRY_DELAY`: Delay between restart retries in seconds (default: 10)
+- `LOCK_FILE_CLEANUP_DELAY`: Wait time for lock file cleanup in seconds (default: 5)
+- `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
+- `DRY_RUN`: Test mode - don't actually restart VMs (true/false)
+- `DEBUG_MODE`: Enable debug output (true/false)
 
 ## Usage
 
@@ -83,14 +91,14 @@ python main.py
 ### Test Mode
 Run in dry-run mode to test without restarting VMs:
 ```bash
-set VM_DRY_RUN=true
+set DRY_RUN=true
 python main.py
 ```
 
 ### Debug Mode
 Run with detailed logging:
 ```bash
-set VM_LOG_LEVEL=DEBUG
+set LOG_LEVEL=DEBUG
 python main.py
 ```
 
@@ -98,8 +106,8 @@ python main.py
 
 1. **VM Discovery**: Uses `vmrun list` to find all powered-on VMs
 2. **Event Checking**: For each VM, checks Windows Event Viewer for Event ID 2004
-3. **Time Window**: Only considers events from the last minute (configurable)
-4. **Restart Logic**: If Event ID 2004 is found, performs a soft restart of the VM
+3. **Time Window**: Only considers events from the last 2 minutes (configurable)
+4. **Restart Logic**: If Event ID 2004 is found, performs a soft restart with retry logic and lock file handling
 5. **Monitoring Loop**: Repeats the process every minute (configurable)
 
 ### Event ID 2004 Details
@@ -114,13 +122,16 @@ This event indicates resource exhaustion issues that may require a VM restart.
 ## File Structure
 
 ```
-vmware-monitor/
+VMware-EventID-2004-Detector/
 ├── main.py              # Main execution script
 ├── vm_manager.py        # VM operations using vmrun
 ├── event_checker.py     # Windows Event Viewer monitoring
 ├── config.py           # Configuration settings
 ├── requirements.txt    # Python dependencies
+├── CONFIG_README.md    # Detailed configuration documentation
 ├── README.md          # This file
+├── .gitignore          # Git ignore rules
+├── capture/            # Event count files (auto-generated)
 └── vmware_monitor.log # Log file (created at runtime)
 ```
 
@@ -178,8 +189,8 @@ Log levels:
 
 3. **Enable debug logging**:
    ```bash
-   set VM_LOG_LEVEL=DEBUG
-   set VM_DEBUG_MODE=true
+   set LOG_LEVEL=DEBUG
+   set DEBUG_MODE=true
    python main.py
    ```
 
@@ -221,6 +232,15 @@ For issues and questions:
    - Error messages and logs
 
 ## Changelog
+
+### v1.1.0
+- Enhanced restart logic with retry mechanism
+- Lock file handling to prevent VM restart errors
+- New configuration options: RESTART_MAX_RETRIES, RESTART_RETRY_DELAY, LOCK_FILE_CLEANUP_DELAY
+- Updated environment variable names (removed VM_ prefix)
+- Added CONFIG_README.md for detailed configuration documentation
+- Improved error handling and logging
+- Added .gitignore files for cleaner repository
 
 ### v1.0.0
 - Initial release
