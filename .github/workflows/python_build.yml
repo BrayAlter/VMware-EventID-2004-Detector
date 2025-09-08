@@ -44,7 +44,7 @@ jobs:
         copy ..\README.md .
         copy ..\LICENSE .
         copy ..\CONFIG_README.md .
-        copy config.yaml .
+        copy ..\config.yaml .
         powershell Compress-Archive -Path main.exe,README.md,LICENSE,CONFIG_README.md,config.yaml -DestinationPath VMware-EventID-2004-Detector.zip
         
     - name: Create release
