@@ -134,7 +134,16 @@ class EventChecker:
             
             # Use configurable capture folder path
             import os
-            script_dir = os.path.dirname(os.path.abspath(__file__))
+            import sys
+            
+            # Handle PyInstaller executable vs script execution
+            if getattr(sys, 'frozen', False):
+                # Running as PyInstaller executable - use executable directory
+                script_dir = os.path.dirname(sys.executable)
+            else:
+                # Running as script - use script directory
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+            
             capture_dir = os.path.join(script_dir, Config.CAPTURE_FOLDER)
             
             # Ensure capture directory exists and is writable
@@ -145,6 +154,7 @@ class EventChecker:
                 with open(test_file, 'w') as f:
                     f.write("test")
                 os.remove(test_file)
+                print(f"[CAPTURE] Using capture folder: {capture_dir}")
             except (OSError, PermissionError) as e:
                 print(f"[CAPTURE ERROR] Cannot write to capture folder: {e}")
                 print(f"[CAPTURE ERROR] Using temp directory instead")
