@@ -48,7 +48,7 @@ jobs:
         copy ..\LICENSE .
         copy ..\CONFIG_README.md .
         copy ..\config.yaml .
-        xcopy ..\capture capture\ /E /I
+        if exist ..\capture\ (xcopy ..\capture capture\ /E /I /Y) else (mkdir capture)
         powershell Compress-Archive -Path main.exe,README.md,LICENSE,CONFIG_README.md,config.yaml,capture -DestinationPath VMware-EventID-2004-Detector.zip
         
     - name: Create release
