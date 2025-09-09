@@ -7,6 +7,8 @@ Handles VMware VM operations using vmrun command-line tool.
 import subprocess
 import logging
 import os
+import glob
+import shutil
 from typing import List, Optional
 from config import Config
 
@@ -122,7 +124,49 @@ class VMManager:
         print(f"[RESTART] All {Config.RESTART_MAX_RETRIES} attempts failed for VM {vm_name}")
         logger.error(f"Failed to restart VM {vm_name} after {Config.RESTART_MAX_RETRIES} attempts")
         return False
-    
+
+    def _clean_vm_lock_files(self, vm_path: str, vm_name: str) -> bool:
+        """Clean lock files for a VM"""
+        try:
+            vm_dir = os.path.dirname(vm_path)
+            vm_base = os.path.splitext(os.path.basename(vm_path))[0]
+            
+            # Common lock file patterns
+            lock_patterns = [
+                f"{vm_base}.vmx.lck",
+                f"{vm_base}.vmdk.lck", 
+                f"{vm_base}*.lck",
+                "*.lck"
+            ]
+            
+            cleaned = False
+            for pattern in lock_patterns:
+                lock_files = glob.glob(os.path.join(vm_dir, pattern))
+                for lock_file in lock_files:
+                    try:
+                        if os.path.isdir(lock_file):
+                            shutil.rmtree(lock_file)
+                            print(f"[CLEANUP] Removed lock directory: {lock_file}")
+                        else:
+                            os.remove(lock_file)
+                            print(f"[CLEANUP] Removed lock file: {lock_file}")
+                        cleaned = True
+                    except Exception as e:
+                        print(f"[CLEANUP] Failed to remove {lock_file}: {e}")
+                        
+            if cleaned:
+                print(f"[CLEANUP] Lock file cleanup completed for {vm_name}")
+                logger.info(f"Cleaned lock files for VM {vm_name}")
+            else:
+                print(f"[CLEANUP] No lock files found for {vm_name}")
+                
+            return True
+            
+        except Exception as e:
+            print(f"[CLEANUP] Lock file cleanup failed for {vm_name}: {e}")
+            logger.error(f"Lock file cleanup failed for {vm_name}: {e}")
+            return False
+
     def _restart_vm_single_attempt(self, vm_path: str, vm_name: str, attempt: int) -> bool:
         """Single restart attempt with enhanced lock file handling"""
         import time
@@ -130,7 +174,15 @@ class VMManager:
         # Step 1: Stop the VM
         print(f"[RESTART] Step 1: Stopping VM {vm_name} (soft shutdown)")
         logger.info(f"Stopping VM: {vm_name}")
-        success, output = self._run_vmrun_command(["stop", vm_path, "soft", "nogui"])
+        
+        # Check if VM is actually running first
+        if not self.is_vm_running(vm_path):
+            print(f"[RESTART] VM {vm_name} is already stopped")
+            logger.info(f"VM {vm_name} is already stopped, skipping stop step")
+            success = True
+            output = "VM already stopped"
+        else:
+            success, output = self._run_vmrun_command(["stop", vm_path, "soft", "nogui"])
         
         if not success:
             if "is not powered on" in output.lower():
@@ -138,13 +190,15 @@ class VMManager:
                 logger.info(f"VM {vm_name} was already stopped")
             elif "locked" in output.lower() or "busy" in output.lower():
                 print(f"[RESTART] VM {vm_name} locked, trying hard stop")
+                print(f"[RESTART] Soft shutdown failed with: {output}")
                 logger.warning(f"VM {vm_name} appears locked, attempting hard stop")
                 success, output = self._run_vmrun_command(["stop", vm_path, "hard", "nogui"])
                 if not success:
                     print(f"[RESTART] Hard stop failed: {output}")
                     return False
             else:
-                print(f"[RESTART] Soft shutdown failed, trying hard stop")
+                print(f"[RESTART] Soft shutdown failed: {output}")
+                print(f"[RESTART] Trying hard stop")
                 logger.error(f"Failed to stop VM {vm_name}: {output}")
                 success, output = self._run_vmrun_command(["stop", vm_path, "hard", "nogui"])
                 if not success:
@@ -178,14 +232,21 @@ class VMManager:
         success, output = self._run_vmrun_command(["start", vm_path, "nogui"])
         
         if not success:
+            print(f"[RESTART] Start failed with error: {output}")
             if "locked" in output.lower() or "busy" in output.lower():
-                print(f"[RESTART] VM {vm_name} still locked, waiting additional 15s")
-                logger.warning(f"VM {vm_name} still locked, waiting additional time: {output}")
-                time.sleep(15)
-                # Retry with standard start
-                success, output = self._run_vmrun_command(["start", vm_path])
-                if not success:
-                    print(f"[RESTART] VM {vm_name} still locked after extended wait, will retry")
+                print(f"[RESTART] VM {vm_name} still locked, cleaning lock files")
+                logger.warning(f"VM {vm_name} still locked, attempting lock file cleanup: {output}")
+                
+                # Clean lock files
+                if self._clean_vm_lock_files(vm_path, vm_name):
+                    time.sleep(5)  # Brief wait after cleanup
+                    # Retry start after lock cleanup
+                    success, output = self._run_vmrun_command(["start", vm_path, "nogui"])
+                    if not success:
+                        print(f"[RESTART] VM {vm_name} still failed after lock cleanup: {output}")
+                        return False
+                else:
+                    print(f"[RESTART] Lock file cleanup failed, will retry")
                     return False
             elif "timeout" in output.lower():
                 print(f"[RESTART] VM {vm_name} start timed out, will retry")
