@@ -124,13 +124,13 @@ class VMManager:
         return False
     
     def _restart_vm_single_attempt(self, vm_path: str, vm_name: str, attempt: int) -> bool:
-        """Single restart attempt with lock file handling"""
+        """Single restart attempt with enhanced lock file handling"""
         import time
         
         # Step 1: Stop the VM
         print(f"[RESTART] Step 1: Stopping VM {vm_name} (soft shutdown)")
         logger.info(f"Stopping VM: {vm_name}")
-        success, output = self._run_vmrun_command(["stop", vm_path, "soft"])
+        success, output = self._run_vmrun_command(["stop", vm_path, "soft", "nogui"])
         
         if not success:
             if "is not powered on" in output.lower():
@@ -139,14 +139,14 @@ class VMManager:
             elif "locked" in output.lower() or "busy" in output.lower():
                 print(f"[RESTART] VM {vm_name} locked, trying hard stop")
                 logger.warning(f"VM {vm_name} appears locked, attempting hard stop")
-                success, output = self._run_vmrun_command(["stop", vm_path, "hard"])
+                success, output = self._run_vmrun_command(["stop", vm_path, "hard", "nogui"])
                 if not success:
                     print(f"[RESTART] Hard stop failed: {output}")
                     return False
             else:
                 print(f"[RESTART] Soft shutdown failed, trying hard stop")
                 logger.error(f"Failed to stop VM {vm_name}: {output}")
-                success, output = self._run_vmrun_command(["stop", vm_path, "hard"])
+                success, output = self._run_vmrun_command(["stop", vm_path, "hard", "nogui"])
                 if not success:
                     print(f"[RESTART] Hard stop failed: {output}")
                     return False
@@ -154,20 +154,42 @@ class VMManager:
         print(f"[RESTART] VM {vm_name} stopped successfully")
         logger.info(f"VM {vm_name} stopped successfully")
         
-        # Step 2: Wait for lock files to clear
+        # Step 2: Wait for lock files to clear with progressive checking
         total_wait = Config.RESTART_DELAY + Config.LOCK_FILE_CLEANUP_DELAY
         print(f"[RESTART] Step 2: Waiting {total_wait}s for lock files to clear")
-        time.sleep(total_wait)
         
-        # Step 3: Start the VM
+        # Check for lock files every 5 seconds during wait period
+        wait_intervals = max(1, total_wait // 5)
+        interval_time = total_wait / wait_intervals
+        
+        for i in range(int(wait_intervals)):
+            time.sleep(interval_time)
+            # Try a quick status check to see if VM is ready
+            if i > 0 and (i % 2 == 0):  # Check every other interval after first
+                test_success, test_output = self._run_vmrun_command(["list"])
+                if test_success:
+                    print(f"[RESTART] Lock file check {i+1}/{int(wait_intervals)} - VMware responding")
+        
+        # Step 3: Start the VM with enhanced error handling
         print(f"[RESTART] Step 3: Starting VM {vm_name}")
         logger.info(f"Starting VM: {vm_name}")
-        success, output = self._run_vmrun_command(["start", vm_path])
+        
+        # First attempt with nogui for faster startup
+        success, output = self._run_vmrun_command(["start", vm_path, "nogui"])
         
         if not success:
             if "locked" in output.lower() or "busy" in output.lower():
-                print(f"[RESTART] VM {vm_name} still locked, will retry")
-                logger.warning(f"VM {vm_name} still locked after waiting: {output}")
+                print(f"[RESTART] VM {vm_name} still locked, waiting additional 15s")
+                logger.warning(f"VM {vm_name} still locked, waiting additional time: {output}")
+                time.sleep(15)
+                # Retry with standard start
+                success, output = self._run_vmrun_command(["start", vm_path])
+                if not success:
+                    print(f"[RESTART] VM {vm_name} still locked after extended wait, will retry")
+                    return False
+            elif "timeout" in output.lower():
+                print(f"[RESTART] VM {vm_name} start timed out, will retry")
+                logger.warning(f"VM {vm_name} start operation timed out: {output}")
                 return False
             else:
                 print(f"[RESTART] Failed to start VM {vm_name}: {output}")

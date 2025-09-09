@@ -19,10 +19,10 @@ class Config:
     RESTART_TIME_THRESHOLD_MINUTES = 2  # Only restart if event is within this many minutes
     RESTART_MAX_RETRIES = 3  # Maximum retry attempts for restart operations
     RESTART_RETRY_DELAY = 10  # Seconds to wait between restart retries
-    LOCK_FILE_CLEANUP_DELAY = 15  # Extra seconds to wait for lock files to clear
+    LOCK_FILE_CLEANUP_DELAY = 30  # Extra seconds to wait for lock files to clear (increased for better reliability)
     
     # vmrun command timeout (in seconds)
-    VMRUN_TIMEOUT = 30  # 30 seconds timeout for vmrun commands
+    VMRUN_TIMEOUT = 120  # 120 seconds timeout for vmrun commands (increased for startup operations)
     
     # Logging settings
     LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL

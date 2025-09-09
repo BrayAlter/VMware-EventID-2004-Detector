@@ -7,14 +7,15 @@ vm_password: "your-vmware-password"
 
 # Timing Settings (in seconds)
 check_interval: 60          # How often to check VMs
-event_check_minutes: 2      # Check for events in the last N minutes
+event_check_minutes: 1      # Check for events in the last N minutes
 restart_delay: 5            # Seconds to wait between stop and start
-vmrun_timeout: 30           # Timeout for vmrun commands
+vmrun_timeout: 120          # Timeout for vmrun commands (increased for startup operations)
 
 # Restart Behavior
-restart_time_threshold_minutes: 2  # Only restart if event is within this many minutes
+restart_time_threshold_minutes: 5  # Only restart if event is within this many minutes (increased from 2)
 restart_max_retries: 3             # Maximum retry attempts for restart operations
 restart_retry_delay: 10            # Seconds to wait between restart retries
+lock_file_cleanup_delay: 30        # Extra wait time for VMware lock files to clear
 
 # Logging
 log_level: "INFO"           # DEBUG, INFO, WARNING, ERROR, CRITICAL
