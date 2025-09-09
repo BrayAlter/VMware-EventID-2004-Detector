@@ -30,7 +30,7 @@ A Python-based monitoring system that automatically detects Windows Event ID 200
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/BrayAlter/vmware-Eventid-2004-detector.git
+   git clone https://github.com/BrayAlter/vmware-eventid-2004-detector.git
    cd vmware-eventid-2004-detector
    ```
 
